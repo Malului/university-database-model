@@ -1,0 +1,260 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  relationMode = "foreignKeys"
+}
+
+model Admin {
+    adminNo     String      @id @db.VarChar(191)
+    firstname   String
+    lastname    String
+    email       String  @db.VarChar(191)
+    password    String  @db.Text
+    role        AdminRole
+    updatedAt   DateTime    @updatedAt
+    createdAt   DateTime    @default(now())
+}
+
+model Finance {
+    financeId   String  @id @default(cuid())
+    debit       Float   @default(0)
+    credit      Float   @default(0)
+    balance     Float   @default(0)
+
+    student     Student?
+    invoices     Invoice[]
+    payments    Payment[]
+}
+
+model Invoice {
+    invoiceNo       String      @id @db.VarChar(191)
+
+    financeId       String      
+    finance         Finance     @relation(fields: [financeId], references: [financeId])
+
+    date            DateTime    @default(now())
+    description     String?      @db.Text
+    debit           Float       @default(0)
+}
+
+model Payment {
+    paymentId   String      @id
+
+    financeId   String
+    finance     Finance     @relation(fields: [financeId], references: [financeId])
+
+    date        DateTime    @default(now())
+    description String?     @db.Text
+    credit      Float       @default(0)
+}
+
+enum CoursCode {
+  BSCS
+  BSIT
+  BTIT
+}
+
+enum CourseLevel {
+  CERTIFICATE
+  DIPLOMA
+  DEGREE
+  MASTERS
+  PHD
+}
+
+enum DepartmentCode {
+  DCST
+  DOE
+}
+
+enum SchoolCode {
+  ICI
+  SOE
+  SOB
+}
+
+enum UnitCode {
+  CCS4401
+  BSA2203
+}
+
+enum Session {
+  ONE_ONE   @map("1.1")
+  ONE_TWO   @map("1.2")
+  TWO_ONE   @map("2.1")
+  TWO_TWO   @map("2.2")
+  THREE_ONE @map("3.1")
+  THREE_TWO @map("3.2")
+  FOUR_ONE  @map("4.1")
+  FOUR_TWO  @map("4.2")
+}
+
+enum RegistrationStatus {
+  UNREGISTERED
+  REGISTERED
+  DEFFERRED
+}
+
+enum AdminRole {
+  VC
+  DVC
+  REGISTRAR
+  FINANCE
+  SUPERADMIN
+}
+
+enum UnitGrade {
+  A
+  B
+  C
+  D
+  E
+}
+
+model Lecturer {
+    staffNo     String      @id @db.VarChar(191)
+    firstname   String
+    lastname    String
+    email       String      @db.VarChar(191)
+    password    String
+    isCOD       Boolean     @default(false)
+    
+    departmentCode  DepartmentCode
+    departmaent     Department      @relation(fields: [departmentCode], references: [departmentCode])
+
+    lecturerUnits   Lecturer_Unit[]
+
+    createdAt   DateTime    @default(now())
+
+    @@index([departmentCode])
+}
+
+model Lecturer_Unit {
+    staffNo     String
+    lecturer    Lecturer @relation(fields: [staffNo], references: [staffNo])
+
+    unitCode    UnitCode
+    unit        Unit    @relation(fields: [unitCode], references: [unitCode])
+
+    courseCode  CoursCode
+    course      Course      @relation(fields: [courseCode], references: [courseCode])
+    
+    session     Session
+
+    @@id([staffNo, unitCode, courseCode])
+}
+
+model School {
+    schoolCode      SchoolCode      @id
+    schoolName      String          @db.VarChar(191)
+    directorId      Int?
+
+    departments     Department[]
+}
+
+model Department {
+    departmentCode      DepartmentCode  @id
+    departmentName      String          @db.VarChar(191)
+
+    schoolCode          SchoolCode
+    school              School      @relation(fields: [schoolCode], references: [schoolCode])
+
+    courses     Course[]
+    lecturers   Lecturer[]
+
+    @@index([schoolCode])
+}
+
+model Course {
+    courseCode      CoursCode   @id
+    courseName      String      @db.VarChar(191)
+    coursePeriod    Int         @db.UnsignedInt
+    courseLevel     CourseLevel
+    courseDescription   String? @db.VarChar(191)
+
+    departmentCode  DepartmentCode
+    department      Department @relation(fields: [departmentCode], references: [departmentCode])
+
+    students        Student[]
+    lecturer_unit   Lecturer_Unit[]
+
+    @@index([departmentCode])
+}
+
+model Unit {
+    unitCode        UnitCode    @id
+    unitName        String      @db.VarChar(191)
+    unitDescription String?  @db.VarChar(191)
+
+    lecturer_unit   Lecturer_Unit[]
+    exam_units       Exam_Unit[]
+}
+
+model Student {
+    regNo           String      @id @db.VarChar(191)
+    firstname       String      @db.VarChar(191)
+    lastname        String      @db.VarChar(191)
+
+    courseCode      CoursCode
+    course          Course   @relation(fields: [courseCode], references: [courseCode])
+
+    progressId      String      @unique
+    progress StudentProgress    @relation(fields: [progressId], references: [progessId])
+
+    financeId       String      @unique
+    finance         Finance     @relation(fields: [financeId], references: [financeId])
+
+
+    admissionDate   DateTime    @default(now())
+
+    @@index([progressId])
+}
+
+
+model StudentProgress {
+    progessId   String                 @id  @default(cuid())
+    session     Session
+    registered  RegistrationStatus  @default(UNREGISTERED)
+
+    examId      String                 @unique
+    exam        Exam                @relation(fields: [examId], references: [examId])
+
+    student     Student? //one-to-one
+
+    @@index([examId])
+}
+
+
+model Exam {
+    examId      String     @id @default(cuid())
+    totalUnits  Int     @default(0)
+
+    progress    StudentProgress? //one-to-one
+    exam_units   Exam_Unit[]
+}
+
+model Exam_Unit {
+    examId      String
+    exam        Exam        @relation(fields: [examId], references: [examId])
+
+    unitCode    UnitCode
+    unit        Unit        @relation(fields: [unitCode], references: [unitCode])
+
+    marks       Int         @db.UnsignedTinyInt
+    isPassed    Boolean     @default(false)
+    updatedAt   DateTime    @updatedAt
+
+    @@id([examId, unitCode])
+}
