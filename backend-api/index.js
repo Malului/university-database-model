@@ -1,19 +1,28 @@
 import cookieParser from "cookie-parser";
 import express from "express";
+import 'dotenv/config';
+
+import errorMiddleware from "./middleware/error.middleware.js";
+
+import authRouter from "./routes/auth.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 
 const app = express();
 
-const port= 3000;
+const port= process.env.PORT;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 
 // Routes
+app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/admin', adminRouter)
+// app.use('api/v1/student', )
+// app.use('/api/v1/lecturer', )
 
-
-// Middleware
-
+// Error Middleware
+app.use(errorMiddleware);
 
 
 

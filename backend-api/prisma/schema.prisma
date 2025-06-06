@@ -20,8 +20,8 @@ model Admin {
     adminNo     String      @id @db.VarChar(191)
     firstname   String
     lastname    String
-    email       String  @db.VarChar(191)
-    password    String  @db.Text
+    email       String  @db.VarChar(191) @unique
+    password    String  
     role        AdminRole
     updatedAt   DateTime    @updatedAt
     createdAt   DateTime    @default(now())
@@ -127,7 +127,7 @@ model Lecturer {
     staffNo     String      @id @db.VarChar(191)
     firstname   String
     lastname    String
-    email       String      @db.VarChar(191)
+    email       String      @db.VarChar(191) @unique
     password    String
     isCOD       Boolean     @default(false)
     
@@ -206,6 +206,8 @@ model Student {
     regNo           String      @id @db.VarChar(191)
     firstname       String      @db.VarChar(191)
     lastname        String      @db.VarChar(191)
+    email           String      @db.VarChar(191) @unique
+    password        String
 
     courseCode      CoursCode
     course          Course   @relation(fields: [courseCode], references: [courseCode])
@@ -225,7 +227,7 @@ model Student {
 
 model StudentProgress {
     progessId   String                 @id  @default(cuid())
-    session     Session
+    session     Session               @default(ONE_ONE)
     registered  RegistrationStatus  @default(UNREGISTERED)
 
     examId      String                 @unique
@@ -252,7 +254,7 @@ model Exam_Unit {
     unitCode    UnitCode
     unit        Unit        @relation(fields: [unitCode], references: [unitCode])
 
-    marks       Int         @db.UnsignedTinyInt
+    marks       Int         @db.UnsignedTinyInt @default(0)
     isPassed    Boolean     @default(false)
     updatedAt   DateTime    @updatedAt
 
