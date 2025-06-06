@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import 'dotenv/config'
 
 // REgister student
-export const studentRegister = async (req, res, next) => {
+export const studentRegister = async (req, res) => {
 
     //try -get all details
     //start a transaction
@@ -14,7 +14,7 @@ export const studentRegister = async (req, res, next) => {
     // if no -hash password, create finance, exam, progress and the a new student
     //Generate token
     try {
-        let {regNo, email, password, ...studentData } = req.body;
+        let {regNo, email, password, firstname, lastname, courseCode } = req.body;
 
         const result = await prisma.$transaction(async (tx) => {
 
@@ -43,19 +43,37 @@ export const studentRegister = async (req, res, next) => {
                 }
             });
 
+            if(!finance) {
+                const error = new Error(`Finance creation failed.`)
+                error.statusCode = 406;
+                throw error
+            }
+
             //Create exam
             const exam = await tx.exam.create({
                 data: {
                     totalUnits: 0
                 }
-            })
+            });
+
+            if(!exam) {
+                const error = new Error(`Exam creation failed.`)
+                error.statusCode = 406;
+                throw error
+            }
 
             //Create progress
-            const progress = await tx.studentprogress.create({
+            const progress = await tx.studentProgress.create({
                 data: {
                     examId: exam.examId
                 }
             })
+
+            if(!progress) {
+                const error = new Error(`Progress creation failed.`)
+                error.statusCode = 406;
+                throw error
+            }
 
             //Create a new student
             const newStudent = await tx.student.create({
@@ -65,7 +83,9 @@ export const studentRegister = async (req, res, next) => {
                     password: hashPassword,
                     progressId: progress.progessId,
                     financeId: finance.financeId,
-                    ...studentData
+                    firstname,
+                    lastname,
+                    courseCode
                 },
                 select: {
                     regNo: true,
@@ -95,6 +115,12 @@ export const studentRegister = async (req, res, next) => {
                     admissionDate: true
                 }
             });
+
+            if(!newStudent) {
+                const error = new Error(`New student creation failed.`)
+                error.statusCode = 406;
+                throw error
+            }
 
             //Generate jwt token
             const token =  jwt.sign({

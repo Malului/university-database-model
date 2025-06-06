@@ -1,6 +1,5 @@
 import cookieParser from "cookie-parser";
 import express from "express";
-import 'dotenv/config';
 
 import errorMiddleware from "./middleware/error.middleware.js";
 
@@ -9,7 +8,6 @@ import adminRouter from "./routes/admin.routes.js";
 
 const app = express();
 
-const port= process.env.PORT;
 
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
@@ -21,15 +19,11 @@ app.use('/api/v1/admin', adminRouter)
 // app.use('api/v1/student', )
 // app.use('/api/v1/lecturer', )
 
+
 // Error Middleware
 app.use(errorMiddleware);
 
-
-
 app.get('/', (req, res) => {res.send('University Database API')});
 
-app.listen(port, () => {
-    console.log(`Connect on http://localhost:${port}`)
-})
 
 export default app;
