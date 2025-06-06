@@ -253,12 +253,13 @@ export const viewStudents = async (req, res) => {
     try {
         const allStudents = await prisma.student.findMany({
             select: {
-                regNo,
-                firstname,
-                lastname,
+                regNo: true,
+                firstname: true,
+                lastname: true,
                 course: {
                     select: {
-                        courseCode
+                        courseCode: true,
+                        courseName:true
                     }
                 }
             }

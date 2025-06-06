@@ -1,11 +1,11 @@
-import {Router} from 'express';
-import {  adminRegister, lecturerRegister, studentRegister } from '../controller/auth.controller.js';
+import { Router } from "express";
+import { adminLogin, studentLogin, lecturerLogin } from "../controller/auth.controller.js";
 
-const authRouter = Router()
+const authRouter = Router();
 
-authRouter.post('/register/student', studentRegister)
-authRouter.post('/register/admin', adminRegister)
-authRouter.post('/register/lecturer', lecturerRegister)
 
+authRouter.post('/admin/login', adminLogin)
+authRouter.post('/student/login', studentLogin)
+authRouter.post('/lecturer/logon', lecturerLogin)
 
 export default authRouter;

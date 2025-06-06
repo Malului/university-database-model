@@ -3,8 +3,9 @@ import express from "express";
 
 import errorMiddleware from "./middleware/error.middleware.js";
 
-import authRouter from "./routes/auth.routes.js";
+import registerRouter from "./routes/register.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import authRouter from "./routes/auth.routes.js";
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
 
 // Routes
+app.use('/api/v1/register', registerRouter)
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/admin', adminRouter)
 // app.use('api/v1/student', )
