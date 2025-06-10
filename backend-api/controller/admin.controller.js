@@ -292,3 +292,56 @@ export const viewStudents = async (req, res) => {
         })
     }
 }
+
+//Get audit logs
+export const getAuditLogs = async (req, res) => {
+    try {
+        const { page = 1, limit = 50, adminNo, action, startDate, endDate } = req.query;
+        
+        const where = {};
+        if (adminNo) where.adminNo = adminNo;
+        if (action) where.action = action;
+        if (startDate || endDate) {
+            where.createdAt = {};
+            if (startDate) where.createdAt.gte = new Date(startDate);
+            if (endDate) where.createdAt.lte = new Date(endDate);
+        }
+
+        const auditLogs = await prisma.auditLog.findMany({
+            where,
+            include: {
+                admin: {
+                    select: {
+                        firstname: true,
+                        lastname: true,
+                        role: true
+                    }
+                }
+            },
+            orderBy: { createdAt: 'desc' },
+            skip: (page - 1) * limit,
+            take: parseInt(limit)
+        });
+
+        const total = await prisma.auditLog.count({ where });
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                logs: auditLogs,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to fetch audit logs"
+        });
+    }
+};

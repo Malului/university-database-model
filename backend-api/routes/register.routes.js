@@ -3,20 +3,22 @@ import {  adminRegister, lecturerRegister, studentRegister } from '../controller
 
 import { authorize, requireREGISTRAR, requireVC, requireSUPERADMIN } from '../middleware/auth.middleware.js';
 
+import { auditLog } from '../middleware/audit.middleware.js';
+
 const registerRouter = Router()
 
 registerRouter.use(authorize)
 
 //Registrar role - register students
-registerRouter.post('/student', requireREGISTRAR, studentRegister)
+registerRouter.post('/student', requireREGISTRAR, auditLog('CREATE', 'student'), studentRegister)
 
 
 //VC roles to register lecturers
-registerRouter.post('/lecturer', requireVC, lecturerRegister)
+registerRouter.post('/lecturer', requireVC, auditLog('CREATE', 'lecturer'), lecturerRegister)
 
 
 //Superadmin role - register admins
-registerRouter.post('/admin', requireSUPERADMIN, adminRegister)
+registerRouter.post('/admin', requireSUPERADMIN, auditLog('CREATE', 'admin'), adminRegister)
 
 
 

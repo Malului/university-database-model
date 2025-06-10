@@ -126,6 +126,7 @@ export const studentRegister = async (req, res) => {
             const token =  jwt.sign({
                 regNo: newStudent.regNo,
                 email: newStudent.email,
+                type: 'student'
             },
             process.env.JWT_SECRET,
             {
@@ -218,7 +219,9 @@ export const adminRegister = async (req, res, next) => {
             //Generate jwt token
             const token =  jwt.sign({
                 adminNo: newAdmin.adminNo,
-                email: newAdmin.email
+                email: newAdmin.email,
+                type: 'admin',
+                role: newAdmin.role
             },
             process.env.JWT_SECRET,
             {
@@ -252,5 +255,77 @@ export const adminRegister = async (req, res, next) => {
 
 // Register lecturer
 export const lecturerRegister = async (req, res, next) => {
+    try {
+        let { staffNo, firstname, lastname, email, password, departmentCode } = req.body;
 
+        const result = await prisma.$transaction( async (tx) => {
+
+            //Check existing lec
+            const existingLecturer = await tx.lecturer.findUnique({
+                where: {
+                    staffNo
+                }
+            });
+
+            if(existingLecturer) {
+                const error = new Error("Lecturer already exist");
+                error.statusCode === 406;
+                throw error;
+            };
+
+            //hash password
+            const genSalt = await bcrypt.genSalt(10);
+            const hashPassword = await bcrypt.hash(password, genSalt);
+
+            //Check departmentCode
+            const existingDepCode = await tx.department.findFirst({
+                where: {
+                    departmentCode: departmentCode
+                }
+            });
+
+            if(!existingDepCode) {
+                const error = new Error("Department does not exist");
+                error.statusCode === 406;
+                throw error;
+            }
+
+            const newLecturer = await tx.lecturer.create({
+                data: {
+                    staffNo: staffNo,
+                    firstname,
+                    lastname,
+                    password: hashPassword,
+                    departmentCode,
+                    email
+                }
+            });
+
+            if(!newLecturer) {
+                const error = new Error("Lecturer not added");
+                error.statusCode === 406;
+                throw error;            
+            }
+
+            //Generate token
+            const token = jwt.sign({
+                staffNo: newLecturer.staffNo,
+                email: newLecturer.email,
+                type: 'lecturer'
+            },
+                process.env.JWT_SECRET,
+            {
+                expiresIn: process.env.JWT_EXPIRES_IN
+            })
+
+
+            const { password: _, newLecturerData} = newLecturer;
+
+            return{newLecturer: newLecturerData, token}
+        })
+
+        return
+    } catch (error) {
+        
+    }
 }

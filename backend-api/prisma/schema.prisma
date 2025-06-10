@@ -23,8 +23,28 @@ model Admin {
     email       String  @db.VarChar(191) @unique
     password    String  
     role        AdminRole
+    auditLogs   AuditLog[]
     updatedAt   DateTime    @updatedAt
     createdAt   DateTime    @default(now())
+}
+
+model AuditLog {
+    id          String      @id @default(cuid())
+    adminNo     String
+    admin       Admin       @relation(fields: [adminNo], references: [adminNo])
+    
+    action      String      @db.VarChar(100)
+    resource    String      @db.VarChar(100)
+    resourceId  String?     @db.VarChar(191)
+    details     String?     @db.Text
+    ipAddress   String?     @db.VarChar(45)
+    userAgent   String?     @db.Text
+    
+    createdAt   DateTime    @default(now())
+
+    @@index([adminNo])
+    @@index([createdAt])
+    @@index([action])
 }
 
 model Finance {
